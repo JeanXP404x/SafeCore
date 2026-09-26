@@ -1,0 +1,77 @@
+plantUML
+
+@startuml
+title Physical Layer - Dräger X-am ENTRANCE
+
+node "Detector X-am ENTRANCE" {
+  rectangle "Sensores\nCelda O2, celda CO/H2S, botón SOS" as sens
+  node "Nodo 1: Medición\nSTM32L4" as n1
+  node "Nodo 2: Edge\nESP32-C3 + LTE-M + BLE" as n2
+  rectangle "Actuadores\nBuzzer 95 dB, vibración, LED" as act
+  rectangle "Batería Li-Ion 3.7 V" as bat
+}
+
+cloud "Vodafone IoT / Dräger Cloud" as cloud
+rectangle "App móvil" as app
+
+sens --> n1
+n1 --> act : alarma
+n1 --> n2 : UART
+bat --> n1
+bat --> n2
+n2 --> cloud : LTE-M
+n2 --> app : BLE
+@enduml
+
+
+
+
+
+este es el c4
+
+
+workspace "Dräger Safety Platform" {
+
+    model {
+        supervisor = person "Supervisor de seguridad"
+        trabajador = person "Trabajador"
+        vodafone = softwareSystem "Vodafone IoT" "Red LTE-M" "External"
+
+        platform = softwareSystem "Dräger Safety Platform" {
+            edge = container "Edge Firmware" "Envía lecturas y alarmas" "ESP32-C3"
+            app = container "Mobile App" "Alarmas y monitoreo" "Flutter"
+            web = container "Web Dashboard" "Monitoreo y reportes" "Angular"
+            api = container "Backend API" "Lógica de negocio" "Spring Boot"
+            broker = container "MQTT Broker" "Recibe datos del detector" "MQTT"
+            db = container "Database" "Lecturas y alarmas" "PostgreSQL" "Database"
+        }
+
+        trabajador -> app "Usa"
+        supervisor -> web "Usa"
+        supervisor -> app "Recibe alarmas"
+        edge -> vodafone "Envía datos" "LTE-M"
+        vodafone -> broker "Reenvía datos" "MQTT"
+        broker -> api "Entrega lecturas y alarmas" "MQTT"
+        app -> api "Consulta datos" "HTTPS"
+        web -> api "Consulta datos" "HTTPS"
+        api -> db "Lee y escribe" "SQL"
+    }
+
+    views {
+        container platform {
+            include *
+            autolayout lr
+        }
+        styles {
+            element "Person" {
+                shape Person
+            }
+            element "Database" {
+                shape Cylinder
+            }
+            element "External" {
+                background #999999
+            }
+        }
+    }
+}
